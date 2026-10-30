@@ -127,23 +127,38 @@
     <p id="scoreMsg" class="msg"></p>
   </div>
 
+  <div id="materialSection" class="hidden">
+  <h3>ครู: เพิ่มชีทและใบงาน</h3>
+  <select id="matKind" class="full">
+    <option value="sheet">ชีทรายคาบ</option>
+    <option value="worksheet">ใบงาน</option>
+  </select>
+  <input id="matTitle" class="full" placeholder="ชื่อ เช่น ชีทคาบที่ 3 ประวัติศาสตร์">
+  <input id="matPeriod" class="full" type="number" min="1" max="10" placeholder="คาบ (ไม่บังคับ)">
+  <input id="matUrl" class="full" placeholder="ลิงก์ Google Drive (ขึ้นต้นด้วย https://)">
+  <button class="full" onclick="addMaterial()">เพิ่มรายการ</button>
+  <p id="matMsg" class="msg"></p>
+</div>
+
   <!-- ส่วนนักเรียน -->
-  <div id="studentSection" class="hidden">
-    <h3>การเช็คชื่อหน้าเสาธงของฉัน</h3>
-    <pre id="myAttendance">กำลังโหลด...</pre>
-    <h3>การเช็คชื่อวิชาสังคมของฉัน</h3>
-    <pre id="mySubjectAttendance">กำลังโหลด...</pre>
-    <h3>คะแนนของฉัน</h3>
-    <pre id="myScores">กำลังโหลด...</pre>
-    <h3>บันทึกเวรของฉัน</h3>
-    <input id="dutyArea" class="full" placeholder="พื้นที่ เช่น ห้องเรียน, ทางเดิน">
-    <input id="dutyNote" class="full" placeholder="หมายเหตุ (ไม่บังคับ)">
-    <button class="full" onclick="addDuty()">บันทึกเวร</button>
-    <p id="dutyMsg" class="msg"></p>
-    <h4>รายการเวรทั้งห้อง</h4>
-    <pre id="dutyList">กำลังโหลด...</pre>
-    <button class="full" onclick="logout()">ออกจากระบบ</button>
-  </div>
+ <div id="studentSection" class="hidden">
+  <h3>การเช็คชื่อหน้าเสาธงของฉัน</h3>
+  <pre id="myAttendance">กำลังโหลด...</pre>
+  <h3>การเช็คชื่อวิชาสังคมของฉัน</h3>
+  <pre id="mySubjectAttendance">กำลังโหลด...</pre>
+  <h3>คะแนนของฉัน</h3>
+  <pre id="myScores">กำลังโหลด...</pre>
+  <h3>บันทึกเวรของฉัน</h3>
+  <input id="dutyArea" class="full" placeholder="พื้นที่ เช่น ห้องเรียน, ทางเดิน">
+  <input id="dutyNote" class="full" placeholder="หมายเหตุ (ไม่บังคับ)">
+  <button class="full" onclick="addDuty()">บันทึกเวร</button>
+  <p id="dutyMsg" class="msg"></p>
+  <h4>รายการเวรทั้งห้อง</h4>
+  <pre id="dutyList">กำลังโหลด...</pre>
+  <h3>ชีทและใบงาน</h3>
+  <div id="materialList">กำลังโหลด...</div>
+  <button class="full" onclick="logout()">ออกจากระบบ</button>
+</div>
 
   <script>
     const SUPABASE_URL = 'https://ejnaphfpzehakmutjxor.supabase.co';
@@ -182,12 +197,15 @@
         await loadSubjectRoster();
         document.getElementById('scoreSection').classList.remove('hidden');
         await loadScoreItems();
+        document.getElementById('materialSection').classList.remove('hidden');
+await loadMaterials();
       } else {
         document.getElementById('studentSection').classList.remove('hidden');
         await loadMyAttendance();
         await loadMySubjectAttendance();
         await loadMyScores();
         await loadDutyList();
+        await loadMaterials();
       }
     }
 
@@ -416,6 +434,52 @@
           ? data.map(r => r.duty_date + ' | ' + r.profiles.full_name + ' | ' + r.area + (r.note ? ' | ' + r.note : '')).join('\n')
           : 'ยังไม่มีบันทึก');
     }
+
+    // ครู: เพิ่มลิงก์ชีทหรือใบงาน (ฐานข้อมูลตรวจรูปแบบลิงก์ให้อีกชั้น)
+async function addMaterial() {
+  const { data: { user } } = await db.auth.getUser();
+  const title = document.getElementById('matTitle').value.trim();
+  const url = document.getElementById('matUrl').value.trim();
+  const periodVal = document.getElementById('matPeriod').value;
+  if (!title || !url) {
+    document.getElementById('matMsg').textContent = 'กรุณากรอกชื่อและลิงก์';
+    return;
+  }
+  const { error } = await db.from('materials').insert({
+    kind: document.getElementById('matKind').value,
+    title: title,
+    drive_url: url,
+    period: periodVal ? Number(periodVal) : null,
+    uploaded_by: user.id
+  });
+  document.getElementById('matMsg').textContent = error
+    ? 'เพิ่มไม่สำเร็จ: ' + error.message
+    : 'เพิ่มรายการแล้ว';
+  if (!error) {
+    document.getElementById('matTitle').value = '';
+    document.getElementById('matUrl').value = '';
+    document.getElementById('matPeriod').value = '';
+    await loadMaterials();
+  }
+}
+
+// ทุกคน: แสดงรายการชีทและใบงานพร้อมปุ่มเปิดลิงก์
+async function loadMaterials() {
+  const { data, error } = await db.from('materials')
+    .select('lesson_date, period, kind, title, drive_url')
+    .order('lesson_date', { ascending: false })
+    .order('id', { ascending: false });
+  const box = document.getElementById('materialList');
+  if (error) { box.textContent = 'เกิดข้อผิดพลาด: ' + error.message; return; }
+  if (!data.length) { box.textContent = 'ยังไม่มีรายการ'; return; }
+  box.innerHTML = data.map(m => `
+    <div style="border:1px solid #ccc;padding:8px;margin:6px 0">
+      <strong>${m.title}</strong><br>
+      ${m.lesson_date} ${m.period ? 'คาบ ' + m.period : ''} ·
+      ${m.kind === 'sheet' ? 'ชีท' : 'ใบงาน'}<br>
+      <a href="${m.drive_url}" target="_blank" rel="noopener">เปิดลิงก์</a>
+    </div>`).join('');
+}
 
     // เปิดหน้าแล้วถ้า login ค้างอยู่ ให้แสดงส่วนที่ถูกต้องเลย
     db.auth.getSession().then(({ data: { session } }) => {
