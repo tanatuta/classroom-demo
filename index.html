@@ -135,6 +135,14 @@
     <pre id="mySubjectAttendance">กำลังโหลด...</pre>
     <h3>คะแนนของฉัน</h3>
     <pre id="myScores">กำลังโหลด...</pre>
+    <h3>บันทึกเวรของฉัน</h3>
+    <input id="dutyArea" class="full" placeholder="พื้นที่ เช่น ห้องเรียน, ทางเดิน">
+    <input id="dutyNote" class="full" placeholder="หมายเหตุ (ไม่บังคับ)">
+    <button class="full" onclick="addDuty()">บันทึกเวร</button>
+    <button class="full" onclick="testFakeDuty()">ทดสอบ: แอบบันทึกเวรให้คนอื่น</button>
+    <p id="dutyMsg" class="msg"></p>
+    <h4>รายการเวรทั้งห้อง</h4>
+    <pre id="dutyList">กำลังโหลด...</pre>
     <button class="full" onclick="logout()">ออกจากระบบ</button>
   </div>
 
@@ -180,6 +188,7 @@
         await loadMyAttendance();
         await loadMySubjectAttendance();
         await loadMyScores();
+        await loadDutyList();
       }
     }
 
@@ -371,6 +380,52 @@
       lines.push('');
       lines.push('รวมทั้งภาค: ' + sum + ' / ' + all);
       document.getElementById('myScores').textContent = lines.join('\n');
+    }
+
+    // นักเรียน: บันทึกเวรของตัวเอง (RLS บังคับว่า student_id ต้องเป็นของตัวเอง)
+    async function addDuty() {
+      const { data: { user } } = await db.auth.getUser();
+      const area = document.getElementById('dutyArea').value.trim();
+      if (!area) {
+        document.getElementById('dutyMsg').textContent = 'กรุณากรอกพื้นที่';
+        return;
+      }
+      const { error } = await db.from('duty_log').insert({
+        student_id: user.id,
+        area: area,
+        note: document.getElementById('dutyNote').value.trim() || null
+      });
+      document.getElementById('dutyMsg').textContent = error
+        ? 'บันทึกไม่สำเร็จ: ' + error.message
+        : 'บันทึกเวรแล้ว';
+      if (!error) {
+        document.getElementById('dutyArea').value = '';
+        document.getElementById('dutyNote').value = '';
+        await loadDutyList();
+      }
+    }
+
+    // ทุกคน: ดูรายการเวรทั้งห้อง
+    async function loadDutyList() {
+      const { data, error } = await db.from('duty_log')
+        .select('duty_date, area, note, profiles(full_name)')
+        .order('duty_date', { ascending: false })
+        .order('id', { ascending: false });
+      document.getElementById('dutyList').textContent = error
+        ? 'เกิดข้อผิดพลาด: ' + error.message
+        : (data.length
+          ? data.map(r => r.duty_date + ' | ' + r.profiles.full_name + ' | ' + r.area + (r.note ? ' | ' + r.note : '')).join('\n')
+          : 'ยังไม่มีบันทึก');
+    }
+
+    async function testFakeDuty() {
+      const { error } = await db.from('duty_log').insert({
+        student_id: '470048ea-e770-4b05-9cf1-856170309ef0',
+        area: 'ทดสอบ'
+      });
+      document.getElementById('dutyMsg').textContent = error
+        ? 'ถูกปฏิเสธ (ถูกต้อง): ' + error.message
+        : 'บันทึกได้ (ผิดจากที่ออกแบบ)';
     }
     // เปิดหน้าแล้วถ้า login ค้างอยู่ ให้แสดงส่วนที่ถูกต้องเลย
     db.auth.getSession().then(({ data: { session } }) => {
