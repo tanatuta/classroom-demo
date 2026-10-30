@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>เช็คชื่อหน้าเสาธง ม.4/1</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 0 16px; }
+    input, button, select { padding: 8px; margin: 4px 0; box-sizing: border-box; }
+    input.full, button.full { width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    .hidden { display: none; }
+    .msg { margin-top: 12px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>เช็คชื่อหน้าเสาธง ม.4/1</h2>
+
+  <!-- ส่วนล็อกอิน -->
+  <div id="loginSection">
+    <input id="email" class="full" placeholder="อีเมล" value="student01@demo.local">
+    <input id="password" class="full" type="password" placeholder="รหัสผ่าน">
+    <button class="full" onclick="login()">Login</button>
+    <p id="loginMsg"></p>
+  </div>
+
+  <!-- ส่วนครู -->
+  <div id="adminSection" class="hidden">
+    <h3>ครู: เช็คชื่อวันนี้ <span id="today"></span></h3>
+    <table>
+      <thead><tr><th>เลขที่</th><th>ชื่อ</th><th>สถานะ</th></tr></thead>
+      <tbody id="rosterBody"></tbody>
+    </table>
+    <button class="full" onclick="saveAll()">บันทึกทั้งห้อง</button>
+    <p id="adminMsg" class="msg"></p>
+    <button class="full" onclick="logout()">ออกจากระบบ</button>
+  </div>
+
+  <!-- ส่วนนักเรียน -->
+  <div id="studentSection" class="hidden">
+    <h3>การเช็คชื่อของฉัน</h3>
+    <pre id="myAttendance">กำลังโหลด...</pre>
+    <button class="full" onclick="logout()">ออกจากระบบ</button>
+  </div>
+
+<script>
+  const SUPABASE_URL = 'https://ejnaphfpzehakmutjxor.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_pUr-MnwjwN2rxT1hjcumQg_1f_fEsgU';
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const STATUS_LABEL = { present: 'มา', late: 'สาย', absent: 'ขาด' };
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+  document.getElementById('today').textContent = today;
+
+  async function login() {
+    const { error } = await db.auth.signInWithPassword({
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
+    });
+    if (error) {
+      document.getElementById('loginMsg').textContent = 'Login ไม่สำเร็จ: ' + error.message;
+      return;
+    }
+    await showByRole();
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    location.reload();
+  }
+
+  // ตรวจบทบาทแล้วแสดงส่วนที่ถูกต้อง
+  async function showByRole() {
+    const { data: { user } } = await db.auth.getUser();
+    const { data: profile } = await db.from('profiles').select('role').eq('id', user.id).single();
+    document.getElementById('loginSection').classList.add('hidden');
+    if (profile.role === 'admin') {
+      document.getElementById('adminSection').classList.remove('hidden');
+      await loadRoster();
+    } else {
+      document.getElementById('studentSection').classList.remove('hidden');
+      await loadMyAttendance();
+    }
+  }
+
+  // ครู: โหลดรายชื่อนักเรียนพร้อมสถานะวันนี้
+  async function loadRoster() {
+    const { data: students } = await db.from('profiles')
+      .select('id, full_name, student_no').eq('role', 'student').order('student_no');
+    const { data: records } = await db.from('flag_attendance')
+      .select('student_id, status').eq('attend_date', today);
+    const map = Object.fromEntries((records || []).map(r => [r.student_id, r.status]));
+
+    document.getElementById('rosterBody').innerHTML = students.map(s => `
+      <tr>
+        <td>${s.student_no}</td>
+        <td>${s.full_name}</td>
+        <td>
+          <select data-id="${s.id}">
+            ${Object.entries(STATUS_LABEL).map(([v, t]) =>
+              `<option value="${v}" ${map[s.id] === v ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </td>
+      </tr>`).join('');
+  }
+
+  // ครู: บันทึกทั้งห้องทีเดียว (upsert กันแถวซ้ำ)
+  async function saveAll() {
+    const { data: { user } } = await db.auth.getUser();
+    const rows = [...document.querySelectorAll('#rosterBody select')].map(sel => ({
+      attend_date: today,
+      student_id: sel.dataset.id,
+      status: sel.value,
+      recorded_by: user.id
+    }));
+    const { error } = await db.from('flag_attendance')
+      .upsert(rows, { onConflict: 'attend_date,student_id' });
+    document.getElementById('adminMsg').textContent = error
+      ? 'บันทึกไม่สำเร็จ: ' + error.message
+      : 'บันทึกแล้ว ' + rows.length + ' คน';
+  }
+
+  // นักเรียน: ดูเช็คชื่อของตัวเองเท่านั้น (RLS กรองให้อยู่แล้ว)
+  async function loadMyAttendance() {
+    const { data, error } = await db.from('flag_attendance')
+      .select('attend_date, status').order('attend_date', { ascending: false });
+    document.getElementById('myAttendance').textContent = error
+      ? 'เกิดข้อผิดพลาด: ' + error.message
+      : (data.length ? data.map(r => r.attend_date + ' : ' + STATUS_LABEL[r.status]).join('\n') : 'ยังไม่มีข้อมูล');
+  }
+
+  // เปิดหน้าแล้วถ้า login ค้างอยู่ ให้แสดงส่วนที่ถูกต้องเลย
+  db.auth.getSession().then(({ data: { session } }) => {
+    if (session) showByRole();
+  });
+</script>
+</body>
+</html>
