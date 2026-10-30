@@ -4,201 +4,268 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>เช็คชื่อหน้าเสาธง ม.4/1</title>
+  <title>ระบบจัดการห้องเรียน ม.4/1</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 700px;
-      margin: 40px auto;
-      padding: 0 16px;
-    }
-
-    input,
-    button,
-    select {
-      padding: 8px;
-      margin: 4px 0;
-      box-sizing: border-box;
-    }
-
-    input.full,
-    button.full,
-    select.full {
-      width: 100%;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-
-    th,
-    td {
-      border: 1px solid #ccc;
-      padding: 6px;
-      text-align: left;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .msg {
-      margin-top: 12px;
-      font-weight: bold;
-    }
-
-    .card {
-      border: 1px solid #ccc;
-      padding: 8px;
-      margin: 6px 0;
-    }
-
-    label.field {
-      display: block;
-      margin-top: 8px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-  <h2>เช็คชื่อหน้าเสาธง ม.4/1</h2>
 
-  <!-- ===== ส่วนล็อกอิน ===== -->
-  <div id="loginSection">
-    <input id="email" class="full" placeholder="อีเมล" value="student01@demo.local">
-    <input id="password" class="full" type="password" placeholder="รหัสผ่าน">
-    <button class="full" onclick="login()">Login</button>
-    <p id="loginMsg"></p>
+  <!-- ===== หน้าล็อกอิน ===== -->
+  <div class="login-wrap hidden">
+    <div id="loginSection" class="login-card">
+      <div class="brand-mark">ม.4/1</div>
+      <h2>ระบบจัดการห้องเรียน ม.4/1</h2>
+      <input id="email" class="full" placeholder="อีเมล" value="student01@demo.local">
+      <input id="password" class="full" type="password" placeholder="รหัสผ่าน">
+      <button class="full" onclick="login()">เข้าสู่ระบบ</button>
+      <p id="loginMsg"></p>
+    </div>
   </div>
 
-  <!-- ===== ส่วนครู ===== -->
-  <div id="adminSection" class="hidden">
+  <!-- ===== โครงหลัก (แสดงหลัง login) ===== -->
+  <div id="appShell" class="shell hidden">
 
-    <h3>ครู: เช็คชื่อหน้าเสาธงวันนี้ <span id="today"></span></h3>
-    <table>
-      <thead>
-        <tr>
-          <th>เลขที่</th>
-          <th>ชื่อ</th>
-          <th>สถานะ</th>
-        </tr>
-      </thead>
-      <tbody id="rosterBody"></tbody>
-    </table>
-    <button class="full" onclick="saveAll()">บันทึกทั้งห้อง</button>
-    <p id="adminMsg" class="msg"></p>
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="logo">ม.4/1</div>
+        <div>
+          <div class="school-name">ชื่อโรงเรียน</div>
+          <div class="system-name">ระบบจัดการห้องเรียน</div>
+        </div>
+      </div>
 
-    <h3>ครู: เช็คชื่อวิชาสังคม วันที่ <span id="subjToday"></span></h3>
-    <label class="field">คาบ
-      <select id="periodSelect" class="full" onchange="loadSubjectRoster()">
-        <option value="1">คาบ 1</option>
-        <option value="2">คาบ 2</option>
-        <option value="3">คาบ 3</option>
-        <option value="4">คาบ 4</option>
-        <option value="5">คาบ 5</option>
-        <option value="6">คาบ 6</option>
-        <option value="7">คาบ 7</option>
-        <option value="8">คาบ 8</option>
-      </select>
-    </label>
-    <table>
-      <thead>
-        <tr>
-          <th>เลขที่</th>
-          <th>ชื่อ</th>
-          <th>สถานะ</th>
-        </tr>
-      </thead>
-      <tbody id="subjRosterBody"></tbody>
-    </table>
-    <button class="full" onclick="saveSubjectAll()">บันทึกทั้งห้อง (วิชาสังคม)</button>
-    <p id="subjMsg" class="msg"></p>
+      <nav id="navAdmin" class="hidden">
+        <button class="nav-item active" data-page="home" onclick="showPage('home')">หน้าหลัก</button>
+        <button class="nav-item" data-page="students" onclick="showPage('students')">ข้อมูลนักเรียน</button>
+        <button class="nav-item" data-page="roster" onclick="showPage('roster')">เช็คชื่อหน้าเสาธง</button>
+        <button class="nav-item" data-page="subject" onclick="showPage('subject')">เช็คชื่อวิชาสังคม</button>
+        <button class="nav-item" data-page="scores" onclick="showPage('scores')">ผลการเรียนและคะแนน</button>
+        <button class="nav-item" data-page="duty" onclick="showPage('duty')">บันทึกเวรประจำวัน</button>
+        <button class="nav-item" data-page="materials" onclick="showPage('materials')">สื่อการเรียนรู้และใบงาน</button>
+        <button class="nav-item" data-page="submissions" onclick="showPage('submissions')">ส่งงาน/ใบงาน</button>
+        <button class="nav-item" data-page="settings" onclick="showPage('settings')">ตั้งค่า</button>
+      </nav>
 
-    <h3>ครู: กรอกคะแนน</h3>
-    <label class="field">ชิ้นงาน
-      <select id="itemSelect" class="full" onchange="loadScoreRoster()"></select>
-    </label>
-    <p id="itemMax"></p>
-    <table>
-      <thead>
-        <tr>
-          <th>เลขที่</th>
-          <th>ชื่อ</th>
-          <th>คะแนน</th>
-        </tr>
-      </thead>
-      <tbody id="scoreRosterBody"></tbody>
-    </table>
-    <button class="full" onclick="saveScores()">บันทึกคะแนนทั้งห้อง</button>
-    <p id="scoreMsg" class="msg"></p>
+      <nav id="navStudent" class="hidden">
+        <button class="nav-item active" data-page="home" onclick="showPage('home')">หน้าหลัก</button>
+        <button class="nav-item" data-page="students" onclick="showPage('students')">ข้อมูลนักเรียน</button>
+        <button class="nav-item" data-page="roster" onclick="showPage('roster')">เช็คชื่อหน้าเสาธง</button>
+        <button class="nav-item" data-page="subject" onclick="showPage('subject')">เช็คชื่อวิชาสังคม</button>
+        <button class="nav-item" data-page="scores" onclick="showPage('scores')">ผลการเรียนและคะแนน</button>
+        <button class="nav-item" data-page="duty" onclick="showPage('duty')">บันทึกเวรประจำวัน</button>
+        <button class="nav-item" data-page="materials" onclick="showPage('materials')">สื่อการเรียนรู้และใบงาน</button>
+        <button class="nav-item" data-page="submissions" onclick="showPage('submissions')">ส่งงาน/ใบงาน</button>
+        <button class="nav-item" data-page="settings" onclick="showPage('settings')">ตั้งค่า</button>
+      </nav>
 
-    <h3>ครู: เพิ่มชีทและใบงาน</h3>
-    <select id="matKind" class="full">
-      <option value="sheet">ชีทรายคาบ</option>
-      <option value="worksheet">ใบงาน</option>
-    </select>
-    <input id="matTitle" class="full" placeholder="ชื่อ เช่น ชีทคาบที่ 3 ประวัติศาสตร์">
-    <input id="matPeriod" class="full" type="number" min="1" max="10" placeholder="คาบ (ไม่บังคับ)">
-    <input id="matUrl" class="full" placeholder="ลิงก์ Google Drive (ขึ้นต้นด้วย https://)">
-    <label class="field">กำหนดส่ง (เฉพาะใบงาน)
-      <input id="matDue" class="full" type="datetime-local">
-    </label>
-    <button class="full" onclick="addMaterial()">เพิ่มรายการ</button>
-    <p id="matMsg" class="msg"></p>
+      <div class="sidebar-footer">คำขวัญโรงเรียน</div>
+    </aside>
 
-    <h3>ครู: ใบงานที่นักเรียนส่ง</h3>
-    <select id="wsSelect" class="full" onchange="loadSubmissions()"></select>
-    <table>
-      <thead>
-        <tr>
-          <th>เลขที่</th>
-          <th>ชื่อ</th>
-          <th>ส่งครั้งแรก</th>
-          <th>แก้ล่าสุด</th>
-          <th>ลิงก์</th>
-        </tr>
-      </thead>
-      <tbody id="subBody"></tbody>
-    </table>
+    <div class="main">
+      <header class="topbar">
+        <div class="top-left">
+          <span class="class-badge">ม.4/1</span>
+          <span id="topDate"></span>
+        </div>
+        <div class="top-right">
+          <button class="icon-btn" title="การแจ้งเตือน" onclick="alert('การแจ้งเตือนจะเปิดใช้ในขั้นถัดไป')">🔔</button>
+          <div class="user-chip">
+            <div class="avatar" id="avatar">?</div>
+            <div>
+              <div class="user-name" id="userName"></div>
+              <div class="user-title" id="userTitle"></div>
+            </div>
+          </div>
+          <button class="logout-btn" onclick="logout()">ออกจากระบบ</button>
+        </div>
+      </header>
 
-    <button class="full" onclick="logout()">ออกจากระบบ</button>
-  </div>
+      <main class="content">
 
-  <!-- ===== ส่วนนักเรียน ===== -->
-  <div id="studentSection" class="hidden">
-    <h3>การเช็คชื่อหน้าเสาธงของฉัน</h3>
-    <pre id="myAttendance">กำลังโหลด...</pre>
+        <!-- ===== ส่วนครู ===== -->
+        <div id="adminSection" class="hidden">
 
-    <h3>การเช็คชื่อวิชาสังคมของฉัน</h3>
-    <pre id="mySubjectAttendance">กำลังโหลด...</pre>
+          <section class="page" id="a-home">
+            <h3>หน้าหลัก</h3>
+            <p class="placeholder">กำลังพัฒนา ขั้น B–E จะแสดงการ์ดสรุปและกราฟที่นี่</p>
+          </section>
 
-    <h3>คะแนนของฉัน</h3>
-    <pre id="myScores">กำลังโหลด...</pre>
+          <section class="page hidden" id="a-students">
+            <h3>ข้อมูลนักเรียน</h3>
+            <p class="placeholder">กำลังพัฒนา ขั้น C จะเป็นตารางค้นหาและกรองได้</p>
+          </section>
 
-    <h3>บันทึกเวรของฉัน</h3>
-    <input id="dutyArea" class="full" placeholder="พื้นที่ เช่น ห้องเรียน, ทางเดิน">
-    <input id="dutyNote" class="full" placeholder="หมายเหตุ (ไม่บังคับ)">
-    <button class="full" onclick="addDuty()">บันทึกเวร</button>
-    <p id="dutyMsg" class="msg"></p>
-    <h4>รายการเวรทั้งห้อง</h4>
-    <pre id="dutyList">กำลังโหลด...</pre>
+          <section class="page hidden" id="a-roster">
+            <h3>ครู: เช็คชื่อหน้าเสาธงวันนี้ <span id="today"></span></h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>เลขที่</th>
+                  <th>ชื่อ</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="rosterBody"></tbody>
+            </table>
+            <button class="full" onclick="saveAll()">บันทึกทั้งห้อง</button>
+            <p id="adminMsg" class="msg"></p>
+          </section>
 
-    <h3>ชีทและใบงาน</h3>
-    <div id="materialList">กำลังโหลด...</div>
+          <section class="page hidden" id="a-subject">
+            <h3>ครู: เช็คชื่อวิชาสังคม วันที่ <span id="subjToday"></span></h3>
+            <label class="field">คาบ
+              <select id="periodSelect" class="full" onchange="loadSubjectRoster()">
+                <option value="1">คาบ 1</option>
+                <option value="2">คาบ 2</option>
+                <option value="3">คาบ 3</option>
+                <option value="4">คาบ 4</option>
+                <option value="5">คาบ 5</option>
+                <option value="6">คาบ 6</option>
+                <option value="7">คาบ 7</option>
+                <option value="8">คาบ 8</option>
+              </select>
+            </label>
+            <table>
+              <thead>
+                <tr>
+                  <th>เลขที่</th>
+                  <th>ชื่อ</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="subjRosterBody"></tbody>
+            </table>
+            <button class="full" onclick="saveSubjectAll()">บันทึกทั้งห้อง (วิชาสังคม)</button>
+            <p id="subjMsg" class="msg"></p>
+          </section>
 
-    <h3>ส่งใบงาน</h3>
-    <div id="worksheetList">กำลังโหลด...</div>
+          <section class="page hidden" id="a-scores">
+            <h3>ครู: กรอกคะแนน</h3>
+            <label class="field">ชิ้นงาน
+              <select id="itemSelect" class="full" onchange="loadScoreRoster()"></select>
+            </label>
+            <p id="itemMax"></p>
+            <table>
+              <thead>
+                <tr>
+                  <th>เลขที่</th>
+                  <th>ชื่อ</th>
+                  <th>คะแนน</th>
+                </tr>
+              </thead>
+              <tbody id="scoreRosterBody"></tbody>
+            </table>
+            <button class="full" onclick="saveScores()">บันทึกคะแนนทั้งห้อง</button>
+            <p id="scoreMsg" class="msg"></p>
+          </section>
 
-    <button class="full" onclick="logout()">ออกจากระบบ</button>
+          <section class="page hidden" id="a-duty">
+            <h3>บันทึกเวรประจำวัน</h3>
+            <p class="placeholder">กำลังพัฒนา ขั้น D จะแสดงรายการเวรทั้งห้องพร้อมตัวกรอง</p>
+          </section>
+
+          <section class="page hidden" id="a-materials">
+            <h3>ครู: เพิ่มชีทและใบงาน</h3>
+            <select id="matKind" class="full">
+              <option value="sheet">ชีทรายคาบ</option>
+              <option value="worksheet">ใบงาน</option>
+            </select>
+            <input id="matTitle" class="full" placeholder="ชื่อ เช่น ชีทคาบที่ 3 ประวัติศาสตร์">
+            <input id="matPeriod" class="full" type="number" min="1" max="10" placeholder="คาบ (ไม่บังคับ)">
+            <input id="matUrl" class="full" placeholder="ลิงก์ Google Drive (ขึ้นต้นด้วย https://)">
+            <label class="field">กำหนดส่ง (เฉพาะใบงาน)
+              <input id="matDue" class="full" type="datetime-local">
+            </label>
+            <button class="full" onclick="addMaterial()">เพิ่มรายการ</button>
+            <p id="matMsg" class="msg"></p>
+          </section>
+
+          <section class="page hidden" id="a-submissions">
+            <h3>ครู: ใบงานที่นักเรียนส่ง</h3>
+            <select id="wsSelect" class="full" onchange="loadSubmissions()"></select>
+            <table>
+              <thead>
+                <tr>
+                  <th>เลขที่</th>
+                  <th>ชื่อ</th>
+                  <th>ส่งครั้งแรก</th>
+                  <th>แก้ล่าสุด</th>
+                  <th>ลิงก์</th>
+                </tr>
+              </thead>
+              <tbody id="subBody"></tbody>
+            </table>
+          </section>
+
+          <section class="page hidden" id="a-settings">
+            <h3>ตั้งค่า</h3>
+            <p class="placeholder">กำลังพัฒนา</p>
+          </section>
+
+        </div>
+
+        <!-- ===== ส่วนนักเรียน ===== -->
+        <div id="studentSection" class="hidden">
+
+          <section class="page" id="s-home">
+            <h3>หน้าหลัก</h3>
+            <p class="placeholder">กำลังพัฒนา จะแสดงกิจกรรมล่าสุดและสรุปของฉัน</p>
+          </section>
+
+          <section class="page hidden" id="s-students">
+            <h3>ข้อมูลส่วนตัว</h3>
+            <p class="placeholder">กำลังพัฒนา</p>
+          </section>
+
+          <section class="page hidden" id="s-roster">
+            <h3>การเช็คชื่อหน้าเสาธงของฉัน</h3>
+            <pre id="myAttendance">กำลังโหลด...</pre>
+          </section>
+
+          <section class="page hidden" id="s-subject">
+            <h3>การเช็คชื่อวิชาสังคมของฉัน</h3>
+            <pre id="mySubjectAttendance">กำลังโหลด...</pre>
+          </section>
+
+          <section class="page hidden" id="s-scores">
+            <h3>คะแนนของฉัน</h3>
+            <pre id="myScores">กำลังโหลด...</pre>
+          </section>
+
+          <section class="page hidden" id="s-duty">
+            <h3>บันทึกเวรของฉัน</h3>
+            <input id="dutyArea" class="full" placeholder="พื้นที่ เช่น ห้องเรียน, ทางเดิน">
+            <input id="dutyNote" class="full" placeholder="หมายเหตุ (ไม่บังคับ)">
+            <button class="full" onclick="addDuty()">บันทึกเวร</button>
+            <p id="dutyMsg" class="msg"></p>
+            <h4>รายการเวรทั้งห้อง</h4>
+            <pre id="dutyList">กำลังโหลด...</pre>
+          </section>
+
+          <section class="page hidden" id="s-materials">
+            <h3>ชีทและใบงาน</h3>
+            <div id="materialList">กำลังโหลด...</div>
+          </section>
+
+          <section class="page hidden" id="s-submissions">
+            <h3>ส่งใบงาน</h3>
+            <div id="worksheetList">กำลังโหลด...</div>
+          </section>
+
+          <section class="page hidden" id="s-settings">
+            <h3>ตั้งค่า</h3>
+            <p class="placeholder">กำลังพัฒนา</p>
+          </section>
+
+        </div>
+
+      </main>
+    </div>
   </div>
 
   <script src="app.js"></script>
-</body>
-
-</html>
+  <script src="nav.js"></script>
 </body>
 
 </html>
