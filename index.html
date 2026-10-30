@@ -7,13 +7,600 @@
   <title>ระบบจัดการห้องเรียน ม.4/1</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+
+    :root {
+      --primary: #0369a1;
+      --primary-hover: #075985;
+      --primary-light: #e0f2fe;
+      --bg: #f0f9ff;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --radius: 10px;
+      --sidebar-w: 240px;
+      --topbar-h: 64px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Sarabun', 'Tahoma', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ===== หน้าล็อกอิน ===== */
+    .login-wrap {
+      padding: 56px 16px;
+    }
+
+    .login-card {
+      max-width: 380px;
+      margin: 0 auto;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .login-card h2 {
+      color: var(--primary);
+      text-align: center;
+      font-size: 20px;
+      margin: 8px 0 16px;
+    }
+
+    .brand-mark {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto;
+      border-radius: 14px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    /* ===== โครง Sidebar + Main ===== */
+    .shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 14px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .school-name {
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .system-name {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .nav-item {
+      text-align: left;
+      margin: 0;
+      padding: 10px 12px;
+      background: transparent;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .nav-item:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-item.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== Top Bar ===== */
+    .topbar {
+      height: var(--topbar-h);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .top-left,
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .class-badge {
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    #topDate {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      margin: 0;
+      padding: 0;
+      border-radius: 50%;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 18px;
+    }
+
+    .icon-btn:hover {
+      background: var(--primary-light);
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .user-name {
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .user-title {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .logout-btn {
+      margin: 0;
+      padding: 8px 14px;
+      background: #fff;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .logout-btn:hover {
+      background: var(--primary-light);
+    }
+
+    /* ===== พื้นที่เนื้อหา ===== */
+    .content {
+      padding: 24px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .page {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .page h3 {
+      color: var(--primary);
+      font-weight: 600;
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    .page h3:not(:first-child) {
+      margin-top: 28px;
+    }
+
+    h4 {
+      color: var(--muted);
+      font-weight: 600;
+      margin: 16px 0 8px;
+    }
+
+    .placeholder {
+      color: var(--muted);
+      padding: 24px 0;
+    }
+
+    /* ===== ฟอร์ม ===== */
+    input,
+    select {
+      font-family: inherit;
+      font-size: 16px;
+      padding: 10px 12px;
+      margin: 4px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+    }
+
+    input.full,
+    select.full,
+    button.full {
+      width: 100%;
+    }
+
+    label.field {
+      display: block;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+
+    td input[type="number"] {
+      width: 90px;
+      text-align: center;
+    }
+
+    td select {
+      min-width: 96px;
+    }
+
+    /* ===== ปุ่ม ===== */
+    button {
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 10px 16px;
+      margin: 6px 0;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* ===== ตาราง ===== */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      font-size: 15px;
+    }
+
+    thead th {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    tbody tr:hover {
+      background: var(--primary-light);
+    }
+
+    /* ===== ข้อความแจ้งผล ===== */
+    .msg {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .msg:empty {
+      display: none;
+    }
+
+    #loginMsg {
+      color: #b91c1c;
+      font-weight: 600;
+      margin-top: 12px;
+    }
+
+    #loginMsg:empty {
+      display: none;
+    }
+
+    /* ===== การ์ด ===== */
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin: 8px 0;
+    }
+
+    .card strong {
+      font-size: 17px;
+    }
+
+    .card a {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 12px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .card a:hover {
+      background: var(--primary-light);
+      text-decoration: none;
+    }
+
+    .card input {
+      margin-top: 6px;
+    }
+
+    .card em {
+      display: inline-block;
+      margin-top: 6px;
+      color: var(--muted);
+    }
+
+    a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    pre {
+      font-family: inherit;
+      font-size: 15px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      margin: 8px 0;
+    }
+
+    /* ===== การ์ด KPI และกราฟหน้าหลัก ===== */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .kpi {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 4px;
+    }
+
+    .chart-box {
+      max-width: 280px;
+      margin: 8px auto 16px;
+    }
+
+    /* ===== มือถือ ===== */
+    @media (max-width: 768px) {
+      .shell {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        padding: 10px 12px;
+      }
+
+      .sidebar-brand {
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+      }
+
+      .sidebar-footer {
+        display: none;
+      }
+
+      nav {
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 6px;
+      }
+
+      .nav-item {
+        white-space: nowrap;
+      }
+
+      .topbar {
+        height: auto;
+        flex-wrap: wrap;
+        padding: 10px 14px;
+      }
+
+      #topDate {
+        display: none;
+      }
+
+      .content {
+        padding: 14px;
+      }
+
+      .page {
+        padding: 14px;
+      }
+
+      table {
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        padding: 8px 6px;
+      }
+
+      td input[type="number"] {
+        width: 72px;
+      }
+
+      td select {
+        min-width: 80px;
+        font-size: 14px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
 </head>
 
 <body>
 
   <!-- ===== หน้าล็อกอิน ===== -->
-  <div class="login-wrap hidden">
+  <div class="login-wrap">
     <div id="loginSection" class="login-card">
       <div class="brand-mark">ม.4/1</div>
       <h2>ระบบจัดการห้องเรียน ม.4/1</h2>
@@ -50,7 +637,7 @@
 
       <nav id="navStudent" class="hidden">
         <button class="nav-item active" data-page="home" onclick="showPage('home')">หน้าหลัก</button>
-        <button class="nav-item" data-page="students" onclick="showPage('students')">ข้อมูลนักเรียน</button>
+        <button class="nav-item" data-page="students" onclick="showPage('students')">ข้อมูลส่วนตัว</button>
         <button class="nav-item" data-page="roster" onclick="showPage('roster')">เช็คชื่อหน้าเสาธง</button>
         <button class="nav-item" data-page="subject" onclick="showPage('subject')">เช็คชื่อวิชาสังคม</button>
         <button class="nav-item" data-page="scores" onclick="showPage('scores')">ผลการเรียนและคะแนน</button>
@@ -89,7 +676,60 @@
 
           <section class="page" id="a-home">
             <h3>หน้าหลัก</h3>
-            <p class="placeholder">กำลังพัฒนา ขั้น B–E จะแสดงการ์ดสรุปและกราฟที่นี่</p>
+
+            <h4>เข้าแถวหน้าเสาธงวันนี้</h4>
+            <div class="kpi-grid">
+              <div class="kpi">
+                <div class="kpi-label">นักเรียนทั้งหมด</div>
+                <div id="flag-total" class="kpi-value">-</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">มาเรียน (มา+สาย)</div>
+                <div id="flag-attend" class="kpi-value">-</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">สาย</div>
+                <div id="flag-late" class="kpi-value">-</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">ขาด</div>
+                <div id="flag-absent" class="kpi-value">-</div>
+              </div>
+            </div>
+            <div class="chart-box"><canvas id="flagChart"></canvas></div>
+
+            <h4>วิชาสังคมวันนี้</h4>
+            <label class="field">คาบ
+              <select id="homePeriod" class="full" onchange="loadAdminHome()">
+                <option value="1">คาบ 1</option>
+                <option value="2">คาบ 2</option>
+                <option value="3">คาบ 3</option>
+                <option value="4">คาบ 4</option>
+                <option value="5">คาบ 5</option>
+                <option value="6">คาบ 6</option>
+                <option value="7">คาบ 7</option>
+                <option value="8">คาบ 8</option>
+              </select>
+            </label>
+            <div class="kpi-grid">
+              <div class="kpi">
+                <div class="kpi-label">นักเรียนทั้งหมด</div>
+                <div id="subj-total" class="kpi-value">-</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">มาเรียน (มา+สาย)</div>
+                <div id="subj-attend" class="kpi-value">-</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">สาย</div>
+                <div id="subj-late" class="kpi-value">-</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">ขาด</div>
+                <div id="subj-absent" class="kpi-value">-</div>
+              </div>
+            </div>
+            <div class="chart-box"><canvas id="subjChart"></canvas></div>
           </section>
 
           <section class="page hidden" id="a-students">
@@ -97,39 +737,21 @@
             <p class="placeholder">กำลังพัฒนา ขั้น C จะเป็นตารางค้นหาและกรองได้</p>
           </section>
 
-          <section class="page" id="a-home">
-  <h3>หน้าหลัก</h3>
-
-  <h4>เข้าแถวหน้าเสาธงวันนี้</h4>
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-label">นักเรียนทั้งหมด</div><div id="flag-total" class="kpi-value">-</div></div>
-    <div class="kpi"><div class="kpi-label">มาเรียน (มา+สาย)</div><div id="flag-attend" class="kpi-value">-</div></div>
-    <div class="kpi"><div class="kpi-label">สาย</div><div id="flag-late" class="kpi-value">-</div></div>
-    <div class="kpi"><div class="kpi-label">ขาด</div><div id="flag-absent" class="kpi-value">-</div></div>
-  </div>
-  <div class="chart-box"><canvas id="flagChart"></canvas></div>
-
-  <h4>วิชาสังคมวันนี้</h4>
-  <label class="field">คาบ
-    <select id="homePeriod" class="full" onchange="loadAdminHome()">
-      <option value="1">คาบ 1</option>
-      <option value="2">คาบ 2</option>
-      <option value="3">คาบ 3</option>
-      <option value="4">คาบ 4</option>
-      <option value="5">คาบ 5</option>
-      <option value="6">คาบ 6</option>
-      <option value="7">คาบ 7</option>
-      <option value="8">คาบ 8</option>
-    </select>
-  </label>
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-label">นักเรียนทั้งหมด</div><div id="subj-total" class="kpi-value">-</div></div>
-    <div class="kpi"><div class="kpi-label">มาเรียน (มา+สาย)</div><div id="subj-attend" class="kpi-value">-</div></div>
-    <div class="kpi"><div class="kpi-label">สาย</div><div id="subj-late" class="kpi-value">-</div></div>
-    <div class="kpi"><div class="kpi-label">ขาด</div><div id="subj-absent" class="kpi-value">-</div></div>
-  </div>
-  <div class="chart-box"><canvas id="subjChart"></canvas></div>
-</section>
+          <section class="page hidden" id="a-roster">
+            <h3>ครู: เช็คชื่อหน้าเสาธงวันนี้ <span id="today"></span></h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>เลขที่</th>
+                  <th>ชื่อ</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="rosterBody"></tbody>
+            </table>
+            <button class="full" onclick="saveAll()">บันทึกทั้งห้อง</button>
+            <p id="adminMsg" class="msg"></p>
+          </section>
 
           <section class="page hidden" id="a-subject">
             <h3>ครู: เช็คชื่อวิชาสังคม วันที่ <span id="subjToday"></span></h3>
@@ -283,9 +905,503 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
-  <script src="nav.js"></script>
-  <script src="home.js"></script>
+  <script>
+    // ===== ตั้งค่าและตัวแปรหลัก =====
+    const SUPABASE_URL = 'https://ejnaphfpzehakmutjxor.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_pUr-MnwjwN2rxT1hjcumQg_1f_fEsgU';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const STATUS_LABEL = { present: 'มา', late: 'สาย', absent: 'ขาด' };
+    const CATEGORY_LABEL = {
+      before_midterm: 'ก่อนกลางภาค',
+      midterm: 'กลางภาค',
+      after_midterm: 'หลังกลางภาค',
+      final: 'ปลายภาค'
+    };
+    const COLORS = { present: '#16a34a', late: '#f59e0b', absent: '#dc2626', none: '#cbd5e1' };
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    const charts = {};
+    let currentItems = [];
+
+    // ตั้งค่าข้อความให้ element โดยไม่พังถ้าหา id ไม่เจอ
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    setText('today', today);
+    setText('subjToday', today);
+
+    // ===== Login / Logout =====
+    async function login() {
+      const { error } = await db.auth.signInWithPassword({
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+      });
+      if (error) {
+        setText('loginMsg', 'Login ไม่สำเร็จ: ' + error.message);
+        return;
+      }
+      await showByRole();
+    }
+
+    async function logout() {
+      await db.auth.signOut();
+      location.reload();
+    }
+
+    // ===== ตรวจบทบาท แสดงโครงหลัก และโหลดข้อมูล =====
+    async function showByRole() {
+      const { data: { user } } = await db.auth.getUser();
+      const { data: profile } = await db.from('profiles')
+        .select('role, full_name, title').eq('id', user.id).single();
+      const admin = profile.role === 'admin';
+
+      document.querySelector('.login-wrap').classList.add('hidden');
+      document.getElementById('appShell').classList.remove('hidden');
+      document.getElementById('adminSection').classList.toggle('hidden', !admin);
+      document.getElementById('studentSection').classList.toggle('hidden', admin);
+      document.getElementById('navAdmin').classList.toggle('hidden', !admin);
+      document.getElementById('navStudent').classList.toggle('hidden', admin);
+
+      loadTopBar(profile, admin);
+
+      if (admin) {
+        await loadRoster();
+        await loadSubjectRoster();
+        await loadScoreItems();
+        await loadWorksheetOptions();
+      } else {
+        await loadMyAttendance();
+        await loadMySubjectAttendance();
+        await loadMyScores();
+        await loadDutyList();
+        await loadMaterials();
+        await loadWorksheets();
+      }
+      showPage('home');
+    }
+
+    // ===== Top Bar =====
+    function loadTopBar(profile, admin) {
+      const shortName = profile.full_name.replace(/^(นางสาว|นาง|นาย)/, '').trim();
+      setText('userName', profile.full_name);
+      setText('userTitle', profile.title || (admin ? 'ครู' : 'นักเรียน'));
+      setText('avatar', shortName.charAt(0));
+      setText('topDate', new Date().toLocaleDateString('th-TH', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Bangkok'
+      }));
+    }
+
+    // ===== สลับหน้า =====
+    function isAdmin() {
+      return !document.getElementById('adminSection').classList.contains('hidden');
+    }
+
+    function showPage(key) {
+      const admin = isAdmin();
+      const prefix = admin ? 'a-' : 's-';
+      const container = document.getElementById(admin ? 'adminSection' : 'studentSection');
+      const navId = admin ? 'navAdmin' : 'navStudent';
+
+      container.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+      const page = document.getElementById(prefix + key);
+      if (page) page.classList.remove('hidden');
+
+      document.querySelectorAll('#' + navId + ' .nav-item')
+        .forEach(b => b.classList.toggle('active', b.dataset.page === key));
+
+      if (key === 'home' && admin) loadAdminHome();
+      window.scrollTo(0, 0);
+    }
+
+    // ===== เช็คชื่อหน้าเสาธง =====
+    async function loadRoster() {
+      const { data: students } = await db.from('profiles')
+        .select('id, full_name, student_no').eq('role', 'student').order('student_no');
+      const { data: records } = await db.from('flag_attendance')
+        .select('student_id, status').eq('attend_date', today);
+      const map = Object.fromEntries((records || []).map(r => [r.student_id, r.status]));
+
+      document.getElementById('rosterBody').innerHTML = students.map(s => `
+      <tr>
+        <td>${s.student_no}</td>
+        <td>${s.full_name}</td>
+        <td>
+          <select data-id="${s.id}">
+            ${Object.entries(STATUS_LABEL).map(([v, t]) =>
+        `<option value="${v}" ${map[s.id] === v ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </td>
+      </tr>`).join('');
+    }
+
+    async function saveAll() {
+      const { data: { user } } = await db.auth.getUser();
+      const rows = [...document.querySelectorAll('#rosterBody select')].map(sel => ({
+        attend_date: today,
+        student_id: sel.dataset.id,
+        status: sel.value,
+        recorded_by: user.id
+      }));
+      const { error } = await db.from('flag_attendance')
+        .upsert(rows, { onConflict: 'attend_date,student_id' });
+      setText('adminMsg', error
+        ? 'บันทึกไม่สำเร็จ: ' + error.message
+        : 'บันทึกแล้ว ' + rows.length + ' คน');
+    }
+
+    async function loadMyAttendance() {
+      const { data, error } = await db.from('flag_attendance')
+        .select('attend_date, status').order('attend_date', { ascending: false });
+      setText('myAttendance', error
+        ? 'เกิดข้อผิดพลาด: ' + error.message
+        : (data.length
+          ? data.map(r => r.attend_date + ' : ' + STATUS_LABEL[r.status]).join('\n')
+          : 'ยังไม่มีข้อมูล'));
+    }
+
+    // ===== เช็คชื่อวิชาสังคม =====
+    async function loadSubjectRoster() {
+      const period = Number(document.getElementById('periodSelect').value);
+      const { data: students } = await db.from('profiles')
+        .select('id, full_name, student_no').eq('role', 'student').order('student_no');
+      const { data: records } = await db.from('subject_attendance')
+        .select('student_id, status').eq('attend_date', today).eq('period', period);
+      const map = Object.fromEntries((records || []).map(r => [r.student_id, r.status]));
+
+      document.getElementById('subjRosterBody').innerHTML = students.map(s => `
+      <tr>
+        <td>${s.student_no}</td>
+        <td>${s.full_name}</td>
+        <td>
+          <select data-id="${s.id}">
+            ${Object.entries(STATUS_LABEL).map(([v, t]) =>
+        `<option value="${v}" ${map[s.id] === v ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </td>
+      </tr>`).join('');
+    }
+
+    async function saveSubjectAll() {
+      const period = Number(document.getElementById('periodSelect').value);
+      const { data: { user } } = await db.auth.getUser();
+      const rows = [...document.querySelectorAll('#subjRosterBody select')].map(sel => ({
+        attend_date: today,
+        period: period,
+        student_id: sel.dataset.id,
+        status: sel.value,
+        recorded_by: user.id
+      }));
+      const { error } = await db.from('subject_attendance')
+        .upsert(rows, { onConflict: 'attend_date,period,student_id' });
+      setText('subjMsg', error
+        ? 'บันทึกไม่สำเร็จ: ' + error.message
+        : 'บันทึกคาบ ' + period + ' แล้ว ' + rows.length + ' คน');
+    }
+
+    async function loadMySubjectAttendance() {
+      const { data, error } = await db.from('subject_attendance')
+        .select('attend_date, period, status')
+        .order('attend_date', { ascending: false })
+        .order('period');
+      setText('mySubjectAttendance', error
+        ? 'เกิดข้อผิดพลาด: ' + error.message
+        : (data.length
+          ? data.map(r => r.attend_date + ' คาบ ' + r.period + ' : ' + STATUS_LABEL[r.status]).join('\n')
+          : 'ยังไม่มีข้อมูล'));
+    }
+
+    // ===== คะแนน =====
+    async function loadScoreItems() {
+      const { data } = await db.from('score_items').select('id, name, max_score').order('id');
+      currentItems = data || [];
+      document.getElementById('itemSelect').innerHTML = currentItems
+        .map(i => `<option value="${i.id}">${i.name} (เต็ม ${i.max_score})</option>`).join('');
+      await loadScoreRoster();
+    }
+
+    async function loadScoreRoster() {
+      const itemId = Number(document.getElementById('itemSelect').value);
+      const item = currentItems.find(i => i.id === itemId);
+      setText('itemMax', item ? 'คะแนนเต็ม ' + item.max_score : '');
+
+      const { data: students } = await db.from('profiles')
+        .select('id, full_name, student_no').eq('role', 'student').order('student_no');
+      const { data: records } = await db.from('scores')
+        .select('student_id, score').eq('item_id', itemId);
+      const map = Object.fromEntries((records || []).map(r => [r.student_id, r.score]));
+
+      document.getElementById('scoreRosterBody').innerHTML = students.map(s => `
+      <tr>
+        <td>${s.student_no}</td>
+        <td>${s.full_name}</td>
+        <td><input type="number" min="0" max="${item ? item.max_score : ''}"
+                   step="0.5" data-id="${s.id}" value="${map[s.id] ?? ''}"></td>
+      </tr>`).join('');
+    }
+
+    async function saveScores() {
+      const itemId = Number(document.getElementById('itemSelect').value);
+      const { data: { user } } = await db.auth.getUser();
+      const rows = [...document.querySelectorAll('#scoreRosterBody input')]
+        .filter(inp => inp.value !== '')
+        .map(inp => ({
+          item_id: itemId,
+          student_id: inp.dataset.id,
+          score: Number(inp.value),
+          recorded_by: user.id
+        }));
+      const { error } = await db.from('scores')
+        .upsert(rows, { onConflict: 'item_id,student_id' });
+      setText('scoreMsg', error
+        ? 'บันทึกไม่สำเร็จ: ' + error.message
+        : 'บันทึกคะแนนแล้ว ' + rows.length + ' คน');
+    }
+
+    async function loadMyScores() {
+      const { data: items, error: e1 } = await db.from('score_items')
+        .select('id, name, category, max_score').order('id');
+      const { data: mine, error: e2 } = await db.from('scores')
+        .select('item_id, score');
+      if (e1 || e2) {
+        setText('myScores', 'เกิดข้อผิดพลาด: ' + (e1 || e2).message);
+        return;
+      }
+      const map = Object.fromEntries((mine || []).map(r => [r.item_id, r.score]));
+
+      const lines = [];
+      for (const cat of Object.keys(CATEGORY_LABEL)) {
+        const inCat = items.filter(i => i.category === cat);
+        if (!inCat.length) continue;
+        const total = inCat.reduce((s, i) => s + Number(i.max_score), 0);
+        const got = inCat.reduce((s, i) => s + (map[i.id] !== undefined ? Number(map[i.id]) : 0), 0);
+        lines.push('== ' + CATEGORY_LABEL[cat] + ' (' + got + ' / ' + total + ')');
+        for (const i of inCat) {
+          const v = map[i.id] !== undefined ? map[i.id] : 'ยังไม่มีคะแนน';
+          lines.push('   ' + i.name + ': ' + v + ' / ' + i.max_score);
+        }
+      }
+      const all = items.reduce((s, i) => s + Number(i.max_score), 0);
+      const sum = Object.values(map).reduce((s, v) => s + Number(v), 0);
+      lines.push('');
+      lines.push('รวมทั้งภาค: ' + sum + ' / ' + all);
+      setText('myScores', lines.join('\n'));
+    }
+
+    // ===== บันทึกเวร =====
+    async function addDuty() {
+      const { data: { user } } = await db.auth.getUser();
+      const area = document.getElementById('dutyArea').value.trim();
+      if (!area) {
+        setText('dutyMsg', 'กรุณากรอกพื้นที่');
+        return;
+      }
+      const { error } = await db.from('duty_log').insert({
+        student_id: user.id,
+        area: area,
+        note: document.getElementById('dutyNote').value.trim() || null
+      });
+      setText('dutyMsg', error ? 'บันทึกไม่สำเร็จ: ' + error.message : 'บันทึกเวรแล้ว');
+      if (!error) {
+        document.getElementById('dutyArea').value = '';
+        document.getElementById('dutyNote').value = '';
+        await loadDutyList();
+      }
+    }
+
+    async function loadDutyList() {
+      const { data, error } = await db.from('duty_log')
+        .select('duty_date, area, note, profiles(full_name)')
+        .order('duty_date', { ascending: false })
+        .order('id', { ascending: false });
+      setText('dutyList', error
+        ? 'เกิดข้อผิดพลาด: ' + error.message
+        : (data.length
+          ? data.map(r => r.duty_date + ' | ' + r.profiles.full_name + ' | ' + r.area + (r.note ? ' | ' + r.note : '')).join('\n')
+          : 'ยังไม่มีบันทึก'));
+    }
+
+    // ===== ชีทและใบงาน =====
+    async function addMaterial() {
+      const { data: { user } } = await db.auth.getUser();
+      const title = document.getElementById('matTitle').value.trim();
+      const url = document.getElementById('matUrl').value.trim();
+      const periodVal = document.getElementById('matPeriod').value;
+      const kind = document.getElementById('matKind').value;
+      const dueVal = document.getElementById('matDue').value;
+
+      if (!title || !url) {
+        setText('matMsg', 'กรุณากรอกชื่อและลิงก์');
+        return;
+      }
+
+      const { error } = await db.from('materials').insert({
+        kind: kind,
+        title: title,
+        drive_url: url,
+        period: periodVal ? Number(periodVal) : null,
+        // datetime-local ให้ค่าแบบ 2026-11-06T23:59 จึงต่อวินาทีและโซนเวลาไทยเข้าไป
+        due_at: (kind === 'worksheet' && dueVal) ? dueVal + ':00+07:00' : null,
+        uploaded_by: user.id
+      });
+
+      setText('matMsg', error ? 'เพิ่มไม่สำเร็จ: ' + error.message : 'เพิ่มรายการแล้ว');
+
+      if (!error) {
+        document.getElementById('matTitle').value = '';
+        document.getElementById('matUrl').value = '';
+        document.getElementById('matPeriod').value = '';
+        document.getElementById('matDue').value = '';
+        await loadMaterials();
+        await loadWorksheetOptions();
+      }
+    }
+
+    async function loadMaterials() {
+      const { data, error } = await db.from('materials')
+        .select('lesson_date, period, kind, title, drive_url')
+        .order('lesson_date', { ascending: false })
+        .order('id', { ascending: false });
+      const box = document.getElementById('materialList');
+      if (!box) return;
+      if (error) { box.textContent = 'เกิดข้อผิดพลาด: ' + error.message; return; }
+      if (!data.length) { box.textContent = 'ยังไม่มีรายการ'; return; }
+      box.innerHTML = data.map(m => `
+      <div class="card">
+        <strong>${m.title}</strong><br>
+        ${m.lesson_date} ${m.period ? 'คาบ ' + m.period : ''} ·
+        ${m.kind === 'sheet' ? 'ชีท' : 'ใบงาน'}<br>
+        <a href="${m.drive_url}" target="_blank" rel="noopener">เปิดลิงก์</a>
+      </div>`).join('');
+    }
+
+    // ===== การส่งใบงาน =====
+    async function loadWorksheetOptions() {
+      const { data } = await db.from('materials')
+        .select('id, title').eq('kind', 'worksheet').order('id', { ascending: false });
+      document.getElementById('wsSelect').innerHTML = (data || [])
+        .map(w => `<option value="${w.id}">${w.title}</option>`).join('');
+      await loadSubmissions();
+    }
+
+    async function loadSubmissions() {
+      const wsId = Number(document.getElementById('wsSelect').value);
+      const body = document.getElementById('subBody');
+      if (!wsId) { body.innerHTML = '<tr><td colspan="5">ยังไม่มีใบงาน</td></tr>'; return; }
+
+      const { data, error } = await db.from('submissions')
+        .select('drive_url, submitted_at, updated_at, profiles(full_name, student_no)')
+        .eq('material_id', wsId)
+        .order('updated_at');
+      if (error) {
+        body.innerHTML = `<tr><td colspan="5">เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
+        return;
+      }
+      const fmt = t => new Date(t).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+      body.innerHTML = data.length
+        ? data.map(s => `
+        <tr>
+          <td>${s.profiles.student_no}</td>
+          <td>${s.profiles.full_name}</td>
+          <td>${fmt(s.submitted_at)}</td>
+          <td>${fmt(s.updated_at)}</td>
+          <td><a href="${s.drive_url}" target="_blank" rel="noopener">เปิด</a></td>
+        </tr>`).join('')
+        : '<tr><td colspan="5">ยังไม่มีการส่ง</td></tr>';
+    }
+
+    async function loadWorksheets() {
+      const { data: { user } } = await db.auth.getUser();
+      const { data: ws } = await db.from('materials')
+        .select('id, title, due_at').eq('kind', 'worksheet').order('id', { ascending: false });
+      const { data: mine } = await db.from('submissions')
+        .select('material_id, drive_url').eq('student_id', user.id);
+      const map = Object.fromEntries((mine || []).map(s => [s.material_id, s.drive_url]));
+      const box = document.getElementById('worksheetList');
+      if (!ws || !ws.length) { box.textContent = 'ยังไม่มีใบงาน'; return; }
+
+      box.innerHTML = ws.map(w => {
+        const due = w.due_at ? new Date(w.due_at) : null;
+        const open = !due || new Date() <= due;
+        const dueText = due
+          ? 'กำหนดส่ง ' + due.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
+          : 'ไม่มีกำหนดส่ง';
+        const sent = map[w.id] ? '(ส่งแล้ว)' : '(ยังไม่ได้ส่ง)';
+        return `
+        <div class="card">
+          <strong>${w.title}</strong><br>${dueText}<br>
+          ${open
+            ? `<input id="link-${w.id}" class="full" placeholder="ลิงก์ Google Drive" value="${map[w.id] || ''}">
+               <button class="full" onclick="submitWorksheet(${w.id})">${map[w.id] ? 'แก้ลิงก์' : 'ส่งใบงาน'}</button>`
+            : `<em>หมดเวลาส่งแล้ว ${sent}</em>`}
+        </div>`;
+      }).join('');
+    }
+
+    async function submitWorksheet(id) {
+      const url = document.getElementById('link-' + id).value.trim();
+      const { data: { user } } = await db.auth.getUser();
+      const { error } = await db.from('submissions').upsert(
+        { material_id: id, student_id: user.id, drive_url: url, updated_at: new Date().toISOString() },
+        { onConflict: 'material_id,student_id' }
+      );
+      alert(error ? 'ส่งไม่สำเร็จ: ' + error.message : 'ส่งใบงานแล้ว');
+      await loadWorksheets();
+    }
+
+    // ===== การ์ดและกราฟหน้าหลักของครู =====
+    async function loadAdminHome() {
+      const period = Number(document.getElementById('homePeriod').value);
+
+      const { count } = await db.from('profiles')
+        .select('id', { count: 'exact', head: true }).eq('role', 'student');
+      const total = count || 0;
+
+      const { data: flagRows } = await db.from('flag_attendance')
+        .select('status').eq('attend_date', today);
+      const { data: subjRows } = await db.from('subject_attendance')
+        .select('status').eq('attend_date', today).eq('period', period);
+
+      renderAttendance('flag', total, flagRows || []);
+      renderAttendance('subj', total, subjRows || []);
+    }
+
+    function renderAttendance(prefix, total, rows) {
+      const countOf = s => rows.filter(r => r.status === s).length;
+      const present = countOf('present');
+      const late = countOf('late');
+      const absent = countOf('absent');
+      const none = Math.max(total - rows.length, 0);
+      const pct = n => total ? Math.round((n / total) * 100) : 0;
+
+      setText(prefix + '-total', total + ' คน');
+      setText(prefix + '-attend', (present + late) + ' คน · ' + pct(present + late) + '%');
+      setText(prefix + '-late', late + ' คน · ' + pct(late) + '%');
+      setText(prefix + '-absent', absent + ' คน · ' + pct(absent) + '%');
+
+      const data = [present, late, absent, none];
+      if (charts[prefix]) {
+        charts[prefix].data.datasets[0].data = data;
+        charts[prefix].update();
+      } else {
+        charts[prefix] = new Chart(document.getElementById(prefix + 'Chart'), {
+          type: 'doughnut',
+          data: {
+            labels: ['มา', 'สาย', 'ขาด', 'ยังไม่เช็ค'],
+            datasets: [{ data, backgroundColor: [COLORS.present, COLORS.late, COLORS.absent, COLORS.none] }]
+          },
+          options: { plugins: { legend: { position: 'bottom' } } }
+        });
+      }
+    }
+
+    // ===== เริ่มทำงาน =====
+    // ถ้ามี session เดิมอยู่ ให้เข้าแอปทันที ไม่งั้นแสดงหน้า login ที่เปิดค้างไว้
+    db.auth.getSession().then(({ data: { session } }) => {
+      if (session) showByRole();
+    });
+  </script>
 </body>
 
 </html>
