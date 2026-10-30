@@ -139,7 +139,6 @@
     <input id="dutyArea" class="full" placeholder="พื้นที่ เช่น ห้องเรียน, ทางเดิน">
     <input id="dutyNote" class="full" placeholder="หมายเหตุ (ไม่บังคับ)">
     <button class="full" onclick="addDuty()">บันทึกเวร</button>
-    <button class="full" onclick="testFakeDuty()">ทดสอบ: แอบบันทึกเวรให้คนอื่น</button>
     <p id="dutyMsg" class="msg"></p>
     <h4>รายการเวรทั้งห้อง</h4>
     <pre id="dutyList">กำลังโหลด...</pre>
@@ -418,15 +417,6 @@
           : 'ยังไม่มีบันทึก');
     }
 
-    async function testFakeDuty() {
-      const { error } = await db.from('duty_log').insert({
-        student_id: '470048ea-e770-4b05-9cf1-856170309ef0',
-        area: 'ทดสอบ'
-      });
-      document.getElementById('dutyMsg').textContent = error
-        ? 'ถูกปฏิเสธ (ถูกต้อง): ' + error.message
-        : 'บันทึกได้ (ผิดจากที่ออกแบบ)';
-    }
     // เปิดหน้าแล้วถ้า login ค้างอยู่ ให้แสดงส่วนที่ถูกต้องเลย
     db.auth.getSession().then(({ data: { session } }) => {
       if (session) showByRole();
