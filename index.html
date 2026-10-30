@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>เช็คชื่อหน้าเสาธง ม.4/1</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -22,7 +23,8 @@
     }
 
     input.full,
-    button.full {
+    button.full,
+    select.full {
       width: 100%;
     }
 
@@ -47,13 +49,24 @@
       margin-top: 12px;
       font-weight: bold;
     }
+
+    .card {
+      border: 1px solid #ccc;
+      padding: 8px;
+      margin: 6px 0;
+    }
+
+    label.field {
+      display: block;
+      margin-top: 8px;
+    }
   </style>
 </head>
 
 <body>
   <h2>เช็คชื่อหน้าเสาธง ม.4/1</h2>
 
-  <!-- ส่วนล็อกอิน -->
+  <!-- ===== ส่วนล็อกอิน ===== -->
   <div id="loginSection">
     <input id="email" class="full" placeholder="อีเมล" value="student01@demo.local">
     <input id="password" class="full" type="password" placeholder="รหัสผ่าน">
@@ -61,9 +74,10 @@
     <p id="loginMsg"></p>
   </div>
 
-  <!-- ส่วนครู -->
+  <!-- ===== ส่วนครู ===== -->
   <div id="adminSection" class="hidden">
-    <h3>ครู: เช็คชื่อวันนี้ <span id="today"></span></h3>
+
+    <h3>ครู: เช็คชื่อหน้าเสาธงวันนี้ <span id="today"></span></h3>
     <table>
       <thead>
         <tr>
@@ -76,13 +90,10 @@
     </table>
     <button class="full" onclick="saveAll()">บันทึกทั้งห้อง</button>
     <p id="adminMsg" class="msg"></p>
-    <button class="full" onclick="logout()">ออกจากระบบ</button>
-  </div>
 
-  <div id="subjectSection" class="hidden">
     <h3>ครู: เช็คชื่อวิชาสังคม วันที่ <span id="subjToday"></span></h3>
-    <label>คาบ
-      <select id="periodSelect" onchange="loadSubjectRoster()">
+    <label class="field">คาบ
+      <select id="periodSelect" class="full" onchange="loadSubjectRoster()">
         <option value="1">คาบ 1</option>
         <option value="2">คาบ 2</option>
         <option value="3">คาบ 3</option>
@@ -105,12 +116,10 @@
     </table>
     <button class="full" onclick="saveSubjectAll()">บันทึกทั้งห้อง (วิชาสังคม)</button>
     <p id="subjMsg" class="msg"></p>
-  </div>
 
-  <div id="scoreSection" class="hidden">
     <h3>ครู: กรอกคะแนน</h3>
-    <label>ชิ้นงาน
-      <select id="itemSelect" onchange="loadScoreRoster()"></select>
+    <label class="field">ชิ้นงาน
+      <select id="itemSelect" class="full" onchange="loadScoreRoster()"></select>
     </label>
     <p id="itemMax"></p>
     <table>
@@ -125,367 +134,71 @@
     </table>
     <button class="full" onclick="saveScores()">บันทึกคะแนนทั้งห้อง</button>
     <p id="scoreMsg" class="msg"></p>
+
+    <h3>ครู: เพิ่มชีทและใบงาน</h3>
+    <select id="matKind" class="full">
+      <option value="sheet">ชีทรายคาบ</option>
+      <option value="worksheet">ใบงาน</option>
+    </select>
+    <input id="matTitle" class="full" placeholder="ชื่อ เช่น ชีทคาบที่ 3 ประวัติศาสตร์">
+    <input id="matPeriod" class="full" type="number" min="1" max="10" placeholder="คาบ (ไม่บังคับ)">
+    <input id="matUrl" class="full" placeholder="ลิงก์ Google Drive (ขึ้นต้นด้วย https://)">
+    <label class="field">กำหนดส่ง (เฉพาะใบงาน)
+      <input id="matDue" class="full" type="datetime-local">
+    </label>
+    <button class="full" onclick="addMaterial()">เพิ่มรายการ</button>
+    <p id="matMsg" class="msg"></p>
+
+    <h3>ครู: ใบงานที่นักเรียนส่ง</h3>
+    <select id="wsSelect" class="full" onchange="loadSubmissions()"></select>
+    <table>
+      <thead>
+        <tr>
+          <th>เลขที่</th>
+          <th>ชื่อ</th>
+          <th>ส่งครั้งแรก</th>
+          <th>แก้ล่าสุด</th>
+          <th>ลิงก์</th>
+        </tr>
+      </thead>
+      <tbody id="subBody"></tbody>
+    </table>
+
+    <button class="full" onclick="logout()">ออกจากระบบ</button>
   </div>
 
-  <div id="materialSection" class="hidden">
-  <h3>ครู: เพิ่มชีทและใบงาน</h3>
-  <select id="matKind" class="full">
-    <option value="sheet">ชีทรายคาบ</option>
-    <option value="worksheet">ใบงาน</option>
-  </select>
-  <input id="matTitle" class="full" placeholder="ชื่อ เช่น ชีทคาบที่ 3 ประวัติศาสตร์">
-  <input id="matPeriod" class="full" type="number" min="1" max="10" placeholder="คาบ (ไม่บังคับ)">
-  <input id="matUrl" class="full" placeholder="ลิงก์ Google Drive (ขึ้นต้นด้วย https://)">
-  <button class="full" onclick="addMaterial()">เพิ่มรายการ</button>
-  <p id="matMsg" class="msg"></p>
-</div>
+  <!-- ===== ส่วนนักเรียน ===== -->
+  <div id="studentSection" class="hidden">
+    <h3>การเช็คชื่อหน้าเสาธงของฉัน</h3>
+    <pre id="myAttendance">กำลังโหลด...</pre>
 
-  <!-- ส่วนนักเรียน -->
- <div id="studentSection" class="hidden">
-  <h3>การเช็คชื่อหน้าเสาธงของฉัน</h3>
-  <pre id="myAttendance">กำลังโหลด...</pre>
-  <h3>การเช็คชื่อวิชาสังคมของฉัน</h3>
-  <pre id="mySubjectAttendance">กำลังโหลด...</pre>
-  <h3>คะแนนของฉัน</h3>
-  <pre id="myScores">กำลังโหลด...</pre>
-  <h3>บันทึกเวรของฉัน</h3>
-  <input id="dutyArea" class="full" placeholder="พื้นที่ เช่น ห้องเรียน, ทางเดิน">
-  <input id="dutyNote" class="full" placeholder="หมายเหตุ (ไม่บังคับ)">
-  <button class="full" onclick="addDuty()">บันทึกเวร</button>
-  <p id="dutyMsg" class="msg"></p>
-  <h4>รายการเวรทั้งห้อง</h4>
-  <pre id="dutyList">กำลังโหลด...</pre>
-  <h3>ชีทและใบงาน</h3>
-  <div id="materialList">กำลังโหลด...</div>
-  <button class="full" onclick="logout()">ออกจากระบบ</button>
-</div>
+    <h3>การเช็คชื่อวิชาสังคมของฉัน</h3>
+    <pre id="mySubjectAttendance">กำลังโหลด...</pre>
 
-  <script>
-    const SUPABASE_URL = 'https://ejnaphfpzehakmutjxor.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_pUr-MnwjwN2rxT1hjcumQg_1f_fEsgU';
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const STATUS_LABEL = { present: 'มา', late: 'สาย', absent: 'ขาด' };
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-    document.getElementById('today').textContent = today;
+    <h3>คะแนนของฉัน</h3>
+    <pre id="myScores">กำลังโหลด...</pre>
 
-    async function login() {
-      const { error } = await db.auth.signInWithPassword({
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value
-      });
-      if (error) {
-        document.getElementById('loginMsg').textContent = 'Login ไม่สำเร็จ: ' + error.message;
-        return;
-      }
-      await showByRole();
-    }
+    <h3>บันทึกเวรของฉัน</h3>
+    <input id="dutyArea" class="full" placeholder="พื้นที่ เช่น ห้องเรียน, ทางเดิน">
+    <input id="dutyNote" class="full" placeholder="หมายเหตุ (ไม่บังคับ)">
+    <button class="full" onclick="addDuty()">บันทึกเวร</button>
+    <p id="dutyMsg" class="msg"></p>
+    <h4>รายการเวรทั้งห้อง</h4>
+    <pre id="dutyList">กำลังโหลด...</pre>
 
-    async function logout() {
-      await db.auth.signOut();
-      location.reload();
-    }
+    <h3>ชีทและใบงาน</h3>
+    <div id="materialList">กำลังโหลด...</div>
 
-    // ตรวจบทบาทแล้วแสดงส่วนที่ถูกต้อง
-    async function showByRole() {
-      const { data: { user } } = await db.auth.getUser();
-      const { data: profile } = await db.from('profiles').select('role').eq('id', user.id).single();
-      document.getElementById('loginSection').classList.add('hidden');
-      if (profile.role === 'admin') {
-        document.getElementById('adminSection').classList.remove('hidden');
-        await loadRoster();
-        document.getElementById('subjectSection').classList.remove('hidden');
-        await loadSubjectRoster();
-        document.getElementById('scoreSection').classList.remove('hidden');
-        await loadScoreItems();
-        document.getElementById('materialSection').classList.remove('hidden');
-await loadMaterials();
-      } else {
-        document.getElementById('studentSection').classList.remove('hidden');
-        await loadMyAttendance();
-        await loadMySubjectAttendance();
-        await loadMyScores();
-        await loadDutyList();
-        await loadMaterials();
-      }
-    }
+    <h3>ส่งใบงาน</h3>
+    <div id="worksheetList">กำลังโหลด...</div>
 
-    // ครู: โหลดรายชื่อนักเรียนพร้อมสถานะวันนี้
-    async function loadRoster() {
-      const { data: students } = await db.from('profiles')
-        .select('id, full_name, student_no').eq('role', 'student').order('student_no');
-      const { data: records } = await db.from('flag_attendance')
-        .select('student_id, status').eq('attend_date', today);
-      const map = Object.fromEntries((records || []).map(r => [r.student_id, r.status]));
+    <button class="full" onclick="logout()">ออกจากระบบ</button>
+  </div>
 
-      document.getElementById('rosterBody').innerHTML = students.map(s => `
-      <tr>
-        <td>${s.student_no}</td>
-        <td>${s.full_name}</td>
-        <td>
-          <select data-id="${s.id}">
-            ${Object.entries(STATUS_LABEL).map(([v, t]) =>
-        `<option value="${v}" ${map[s.id] === v ? 'selected' : ''}>${t}</option>`).join('')}
-          </select>
-        </td>
-      </tr>`).join('');
-    }
+  <script src="app.js"></script>
+</body>
 
-    // ครู: บันทึกทั้งห้องทีเดียว (upsert กันแถวซ้ำ)
-    async function saveAll() {
-      const { data: { user } } = await db.auth.getUser();
-      const rows = [...document.querySelectorAll('#rosterBody select')].map(sel => ({
-        attend_date: today,
-        student_id: sel.dataset.id,
-        status: sel.value,
-        recorded_by: user.id
-      }));
-      const { error } = await db.from('flag_attendance')
-        .upsert(rows, { onConflict: 'attend_date,student_id' });
-      document.getElementById('adminMsg').textContent = error
-        ? 'บันทึกไม่สำเร็จ: ' + error.message
-        : 'บันทึกแล้ว ' + rows.length + ' คน';
-    }
-
-    // นักเรียน: ดูเช็คชื่อของตัวเองเท่านั้น (RLS กรองให้อยู่แล้ว)
-    async function loadMyAttendance() {
-      const { data, error } = await db.from('flag_attendance')
-        .select('attend_date, status').order('attend_date', { ascending: false });
-      document.getElementById('myAttendance').textContent = error
-        ? 'เกิดข้อผิดพลาด: ' + error.message
-        : (data.length ? data.map(r => r.attend_date + ' : ' + STATUS_LABEL[r.status]).join('\n') : 'ยังไม่มีข้อมูล');
-    }
-
-    document.getElementById('subjToday').textContent = today;
-
-    // ครู: โหลดรายชื่อและสถานะของคาบที่เลือก
-    async function loadSubjectRoster() {
-      const period = Number(document.getElementById('periodSelect').value);
-      const { data: students } = await db.from('profiles')
-        .select('id, full_name, student_no').eq('role', 'student').order('student_no');
-      const { data: records } = await db.from('subject_attendance')
-        .select('student_id, status').eq('attend_date', today).eq('period', period);
-      const map = Object.fromEntries((records || []).map(r => [r.student_id, r.status]));
-
-      document.getElementById('subjRosterBody').innerHTML = students.map(s => `
-    <tr>
-      <td>${s.student_no}</td>
-      <td>${s.full_name}</td>
-      <td>
-        <select data-id="${s.id}">
-          ${Object.entries(STATUS_LABEL).map(([v, t]) =>
-        `<option value="${v}" ${map[s.id] === v ? 'selected' : ''}>${t}</option>`).join('')}
-        </select>
-      </td>
-    </tr>`).join('');
-    }
-
-    // ครู: บันทึกทั้งห้องของคาบที่เลือก
-    async function saveSubjectAll() {
-      const period = Number(document.getElementById('periodSelect').value);
-      const { data: { user } } = await db.auth.getUser();
-      const rows = [...document.querySelectorAll('#subjRosterBody select')].map(sel => ({
-        attend_date: today,
-        period: period,
-        student_id: sel.dataset.id,
-        status: sel.value,
-        recorded_by: user.id
-      }));
-      const { error } = await db.from('subject_attendance')
-        .upsert(rows, { onConflict: 'attend_date,period,student_id' });
-      document.getElementById('subjMsg').textContent = error
-        ? 'บันทึกไม่สำเร็จ: ' + error.message
-        : 'บันทึกคาบ ' + period + ' แล้ว ' + rows.length + ' คน';
-    }
-
-    // นักเรียน: ดูการเช็คชื่อวิชาสังคมของตัวเอง (RLS กรองให้อยู่แล้ว)
-    async function loadMySubjectAttendance() {
-      const { data, error } = await db.from('subject_attendance')
-        .select('attend_date, period, status')
-        .order('attend_date', { ascending: false })
-        .order('period');
-      document.getElementById('mySubjectAttendance').textContent = error
-        ? 'เกิดข้อผิดพลาด: ' + error.message
-        : (data.length
-          ? data.map(r => r.attend_date + ' คาบ ' + r.period + ' : ' + STATUS_LABEL[r.status]).join('\n')
-          : 'ยังไม่มีข้อมูล');
-    }
-
-    let currentItems = [];
-
-    // ครู: โหลดรายการชิ้นงานลงใน dropdown
-    async function loadScoreItems() {
-      const { data } = await db.from('score_items').select('id, name, max_score').order('id');
-      currentItems = data || [];
-      document.getElementById('itemSelect').innerHTML = currentItems
-        .map(i => `<option value="${i.id}">${i.name} (เต็ม ${i.max_score})</option>`).join('');
-      await loadScoreRoster();
-    }
-
-    // ครู: โหลดรายชื่อพร้อมคะแนนที่กรอกไว้ของชิ้นงานที่เลือก
-    async function loadScoreRoster() {
-      const itemId = Number(document.getElementById('itemSelect').value);
-      const item = currentItems.find(i => i.id === itemId);
-      document.getElementById('itemMax').textContent = item ? 'คะแนนเต็ม ' + item.max_score : '';
-
-      const { data: students } = await db.from('profiles')
-        .select('id, full_name, student_no').eq('role', 'student').order('student_no');
-      const { data: records } = await db.from('scores')
-        .select('student_id, score').eq('item_id', itemId);
-      const map = Object.fromEntries((records || []).map(r => [r.student_id, r.score]));
-
-      document.getElementById('scoreRosterBody').innerHTML = students.map(s => `
-    <tr>
-      <td>${s.student_no}</td>
-      <td>${s.full_name}</td>
-      <td><input type="number" min="0" max="${item ? item.max_score : ''}"
-                 step="0.5" data-id="${s.id}" value="${map[s.id] ?? ''}"></td>
-    </tr>`).join('');
-    }
-
-    // ครู: บันทึกคะแนนทั้งห้องของชิ้นงานที่เลือก (ข้ามช่องที่ว่าง)
-    async function saveScores() {
-      const itemId = Number(document.getElementById('itemSelect').value);
-      const { data: { user } } = await db.auth.getUser();
-      const rows = [...document.querySelectorAll('#scoreRosterBody input')]
-        .filter(inp => inp.value !== '')
-        .map(inp => ({
-          item_id: itemId,
-          student_id: inp.dataset.id,
-          score: Number(inp.value),
-          recorded_by: user.id
-        }));
-      const { error } = await db.from('scores')
-        .upsert(rows, { onConflict: 'item_id,student_id' });
-      document.getElementById('scoreMsg').textContent = error
-        ? 'บันทึกไม่สำเร็จ: ' + error.message
-        : 'บันทึกคะแนนแล้ว ' + rows.length + ' คน';
-    }
-
-    const CATEGORY_LABEL = {
-      before_midterm: 'ก่อนกลางภาค',
-      midterm: 'กลางภาค',
-      after_midterm: 'หลังกลางภาค',
-      final: 'ปลายภาค'
-    };
-
-    // นักเรียน: ดูคะแนนของตัวเองพร้อมคะแนนเต็ม (RLS กรองให้อยู่แล้ว)
-    async function loadMyScores() {
-      const { data: items, error: e1 } = await db.from('score_items')
-        .select('id, name, category, max_score').order('id');
-      const { data: mine, error: e2 } = await db.from('scores')
-        .select('item_id, score');
-      if (e1 || e2) {
-        document.getElementById('myScores').textContent = 'เกิดข้อผิดพลาด: ' + (e1 || e2).message;
-        return;
-      }
-      const map = Object.fromEntries((mine || []).map(r => [r.item_id, r.score]));
-
-      let lines = [];
-      for (const cat of Object.keys(CATEGORY_LABEL)) {
-        const inCat = items.filter(i => i.category === cat);
-        if (!inCat.length) continue;
-        const total = inCat.reduce((sum, i) => sum + Number(i.max_score), 0);
-        const got = inCat.reduce((sum, i) => sum + (map[i.id] !== undefined ? Number(map[i.id]) : 0), 0);
-        lines.push('== ' + CATEGORY_LABEL[cat] + ' (' + got + ' / ' + total + ')');
-        for (const i of inCat) {
-          const v = map[i.id] !== undefined ? map[i.id] : 'ยังไม่มีคะแนน';
-          lines.push('   ' + i.name + ': ' + v + ' / ' + i.max_score);
-        }
-      }
-      const all = items.reduce((s, i) => s + Number(i.max_score), 0);
-      const sum = Object.values(map).reduce((s, v) => s + Number(v), 0);
-      lines.push('');
-      lines.push('รวมทั้งภาค: ' + sum + ' / ' + all);
-      document.getElementById('myScores').textContent = lines.join('\n');
-    }
-
-    // นักเรียน: บันทึกเวรของตัวเอง (RLS บังคับว่า student_id ต้องเป็นของตัวเอง)
-    async function addDuty() {
-      const { data: { user } } = await db.auth.getUser();
-      const area = document.getElementById('dutyArea').value.trim();
-      if (!area) {
-        document.getElementById('dutyMsg').textContent = 'กรุณากรอกพื้นที่';
-        return;
-      }
-      const { error } = await db.from('duty_log').insert({
-        student_id: user.id,
-        area: area,
-        note: document.getElementById('dutyNote').value.trim() || null
-      });
-      document.getElementById('dutyMsg').textContent = error
-        ? 'บันทึกไม่สำเร็จ: ' + error.message
-        : 'บันทึกเวรแล้ว';
-      if (!error) {
-        document.getElementById('dutyArea').value = '';
-        document.getElementById('dutyNote').value = '';
-        await loadDutyList();
-      }
-    }
-
-    // ทุกคน: ดูรายการเวรทั้งห้อง
-    async function loadDutyList() {
-      const { data, error } = await db.from('duty_log')
-        .select('duty_date, area, note, profiles(full_name)')
-        .order('duty_date', { ascending: false })
-        .order('id', { ascending: false });
-      document.getElementById('dutyList').textContent = error
-        ? 'เกิดข้อผิดพลาด: ' + error.message
-        : (data.length
-          ? data.map(r => r.duty_date + ' | ' + r.profiles.full_name + ' | ' + r.area + (r.note ? ' | ' + r.note : '')).join('\n')
-          : 'ยังไม่มีบันทึก');
-    }
-
-    // ครู: เพิ่มลิงก์ชีทหรือใบงาน (ฐานข้อมูลตรวจรูปแบบลิงก์ให้อีกชั้น)
-async function addMaterial() {
-  const { data: { user } } = await db.auth.getUser();
-  const title = document.getElementById('matTitle').value.trim();
-  const url = document.getElementById('matUrl').value.trim();
-  const periodVal = document.getElementById('matPeriod').value;
-  if (!title || !url) {
-    document.getElementById('matMsg').textContent = 'กรุณากรอกชื่อและลิงก์';
-    return;
-  }
-  const { error } = await db.from('materials').insert({
-    kind: document.getElementById('matKind').value,
-    title: title,
-    drive_url: url,
-    period: periodVal ? Number(periodVal) : null,
-    uploaded_by: user.id
-  });
-  document.getElementById('matMsg').textContent = error
-    ? 'เพิ่มไม่สำเร็จ: ' + error.message
-    : 'เพิ่มรายการแล้ว';
-  if (!error) {
-    document.getElementById('matTitle').value = '';
-    document.getElementById('matUrl').value = '';
-    document.getElementById('matPeriod').value = '';
-    await loadMaterials();
-  }
-}
-
-// ทุกคน: แสดงรายการชีทและใบงานพร้อมปุ่มเปิดลิงก์
-async function loadMaterials() {
-  const { data, error } = await db.from('materials')
-    .select('lesson_date, period, kind, title, drive_url')
-    .order('lesson_date', { ascending: false })
-    .order('id', { ascending: false });
-  const box = document.getElementById('materialList');
-  if (error) { box.textContent = 'เกิดข้อผิดพลาด: ' + error.message; return; }
-  if (!data.length) { box.textContent = 'ยังไม่มีรายการ'; return; }
-  box.innerHTML = data.map(m => `
-    <div style="border:1px solid #ccc;padding:8px;margin:6px 0">
-      <strong>${m.title}</strong><br>
-      ${m.lesson_date} ${m.period ? 'คาบ ' + m.period : ''} ·
-      ${m.kind === 'sheet' ? 'ชีท' : 'ใบงาน'}<br>
-      <a href="${m.drive_url}" target="_blank" rel="noopener">เปิดลิงก์</a>
-    </div>`).join('');
-}
-
-    // เปิดหน้าแล้วถ้า login ค้างอยู่ ให้แสดงส่วนที่ถูกต้องเลย
-    db.auth.getSession().then(({ data: { session } }) => {
-      if (session) showByRole();
-    });
-  </script>
+</html>
 </body>
 
 </html>
