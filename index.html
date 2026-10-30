@@ -107,12 +107,34 @@
     <p id="subjMsg" class="msg"></p>
   </div>
 
+  <div id="scoreSection" class="hidden">
+    <h3>ครู: กรอกคะแนน</h3>
+    <label>ชิ้นงาน
+      <select id="itemSelect" onchange="loadScoreRoster()"></select>
+    </label>
+    <p id="itemMax"></p>
+    <table>
+      <thead>
+        <tr>
+          <th>เลขที่</th>
+          <th>ชื่อ</th>
+          <th>คะแนน</th>
+        </tr>
+      </thead>
+      <tbody id="scoreRosterBody"></tbody>
+    </table>
+    <button class="full" onclick="saveScores()">บันทึกคะแนนทั้งห้อง</button>
+    <p id="scoreMsg" class="msg"></p>
+  </div>
+
   <!-- ส่วนนักเรียน -->
   <div id="studentSection" class="hidden">
     <h3>การเช็คชื่อหน้าเสาธงของฉัน</h3>
     <pre id="myAttendance">กำลังโหลด...</pre>
     <h3>การเช็คชื่อวิชาสังคมของฉัน</h3>
     <pre id="mySubjectAttendance">กำลังโหลด...</pre>
+    <h3>คะแนนของฉัน</h3>
+    <pre id="myScores">กำลังโหลด...</pre>
     <button class="full" onclick="logout()">ออกจากระบบ</button>
   </div>
 
@@ -151,10 +173,13 @@
         await loadRoster();
         document.getElementById('subjectSection').classList.remove('hidden');
         await loadSubjectRoster();
+        document.getElementById('scoreSection').classList.remove('hidden');
+        await loadScoreItems();
       } else {
         document.getElementById('studentSection').classList.remove('hidden');
         await loadMyAttendance();
         await loadMySubjectAttendance();
+        await loadMyScores();
       }
     }
 
@@ -257,6 +282,95 @@
         : (data.length
           ? data.map(r => r.attend_date + ' คาบ ' + r.period + ' : ' + STATUS_LABEL[r.status]).join('\n')
           : 'ยังไม่มีข้อมูล');
+    }
+
+    let currentItems = [];
+
+    // ครู: โหลดรายการชิ้นงานลงใน dropdown
+    async function loadScoreItems() {
+      const { data } = await db.from('score_items').select('id, name, max_score').order('id');
+      currentItems = data || [];
+      document.getElementById('itemSelect').innerHTML = currentItems
+        .map(i => `<option value="${i.id}">${i.name} (เต็ม ${i.max_score})</option>`).join('');
+      await loadScoreRoster();
+    }
+
+    // ครู: โหลดรายชื่อพร้อมคะแนนที่กรอกไว้ของชิ้นงานที่เลือก
+    async function loadScoreRoster() {
+      const itemId = Number(document.getElementById('itemSelect').value);
+      const item = currentItems.find(i => i.id === itemId);
+      document.getElementById('itemMax').textContent = item ? 'คะแนนเต็ม ' + item.max_score : '';
+
+      const { data: students } = await db.from('profiles')
+        .select('id, full_name, student_no').eq('role', 'student').order('student_no');
+      const { data: records } = await db.from('scores')
+        .select('student_id, score').eq('item_id', itemId);
+      const map = Object.fromEntries((records || []).map(r => [r.student_id, r.score]));
+
+      document.getElementById('scoreRosterBody').innerHTML = students.map(s => `
+    <tr>
+      <td>${s.student_no}</td>
+      <td>${s.full_name}</td>
+      <td><input type="number" min="0" max="${item ? item.max_score : ''}"
+                 step="0.5" data-id="${s.id}" value="${map[s.id] ?? ''}"></td>
+    </tr>`).join('');
+    }
+
+    // ครู: บันทึกคะแนนทั้งห้องของชิ้นงานที่เลือก (ข้ามช่องที่ว่าง)
+    async function saveScores() {
+      const itemId = Number(document.getElementById('itemSelect').value);
+      const { data: { user } } = await db.auth.getUser();
+      const rows = [...document.querySelectorAll('#scoreRosterBody input')]
+        .filter(inp => inp.value !== '')
+        .map(inp => ({
+          item_id: itemId,
+          student_id: inp.dataset.id,
+          score: Number(inp.value),
+          recorded_by: user.id
+        }));
+      const { error } = await db.from('scores')
+        .upsert(rows, { onConflict: 'item_id,student_id' });
+      document.getElementById('scoreMsg').textContent = error
+        ? 'บันทึกไม่สำเร็จ: ' + error.message
+        : 'บันทึกคะแนนแล้ว ' + rows.length + ' คน';
+    }
+
+    const CATEGORY_LABEL = {
+      before_midterm: 'ก่อนกลางภาค',
+      midterm: 'กลางภาค',
+      after_midterm: 'หลังกลางภาค',
+      final: 'ปลายภาค'
+    };
+
+    // นักเรียน: ดูคะแนนของตัวเองพร้อมคะแนนเต็ม (RLS กรองให้อยู่แล้ว)
+    async function loadMyScores() {
+      const { data: items, error: e1 } = await db.from('score_items')
+        .select('id, name, category, max_score').order('id');
+      const { data: mine, error: e2 } = await db.from('scores')
+        .select('item_id, score');
+      if (e1 || e2) {
+        document.getElementById('myScores').textContent = 'เกิดข้อผิดพลาด: ' + (e1 || e2).message;
+        return;
+      }
+      const map = Object.fromEntries((mine || []).map(r => [r.item_id, r.score]));
+
+      let lines = [];
+      for (const cat of Object.keys(CATEGORY_LABEL)) {
+        const inCat = items.filter(i => i.category === cat);
+        if (!inCat.length) continue;
+        const total = inCat.reduce((sum, i) => sum + Number(i.max_score), 0);
+        const got = inCat.reduce((sum, i) => sum + (map[i.id] !== undefined ? Number(map[i.id]) : 0), 0);
+        lines.push('== ' + CATEGORY_LABEL[cat] + ' (' + got + ' / ' + total + ')');
+        for (const i of inCat) {
+          const v = map[i.id] !== undefined ? map[i.id] : 'ยังไม่มีคะแนน';
+          lines.push('   ' + i.name + ': ' + v + ' / ' + i.max_score);
+        }
+      }
+      const all = items.reduce((s, i) => s + Number(i.max_score), 0);
+      const sum = Object.values(map).reduce((s, v) => s + Number(v), 0);
+      lines.push('');
+      lines.push('รวมทั้งภาค: ' + sum + ' / ' + all);
+      document.getElementById('myScores').textContent = lines.join('\n');
     }
     // เปิดหน้าแล้วถ้า login ค้างอยู่ ให้แสดงส่วนที่ถูกต้องเลย
     db.auth.getSession().then(({ data: { session } }) => {
