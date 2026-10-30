@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบจัดการห้องเรียน ม.4/1</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -96,21 +97,39 @@
             <p class="placeholder">กำลังพัฒนา ขั้น C จะเป็นตารางค้นหาและกรองได้</p>
           </section>
 
-          <section class="page hidden" id="a-roster">
-            <h3>ครู: เช็คชื่อหน้าเสาธงวันนี้ <span id="today"></span></h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>เลขที่</th>
-                  <th>ชื่อ</th>
-                  <th>สถานะ</th>
-                </tr>
-              </thead>
-              <tbody id="rosterBody"></tbody>
-            </table>
-            <button class="full" onclick="saveAll()">บันทึกทั้งห้อง</button>
-            <p id="adminMsg" class="msg"></p>
-          </section>
+          <section class="page" id="a-home">
+  <h3>หน้าหลัก</h3>
+
+  <h4>เข้าแถวหน้าเสาธงวันนี้</h4>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">นักเรียนทั้งหมด</div><div id="flag-total" class="kpi-value">-</div></div>
+    <div class="kpi"><div class="kpi-label">มาเรียน (มา+สาย)</div><div id="flag-attend" class="kpi-value">-</div></div>
+    <div class="kpi"><div class="kpi-label">สาย</div><div id="flag-late" class="kpi-value">-</div></div>
+    <div class="kpi"><div class="kpi-label">ขาด</div><div id="flag-absent" class="kpi-value">-</div></div>
+  </div>
+  <div class="chart-box"><canvas id="flagChart"></canvas></div>
+
+  <h4>วิชาสังคมวันนี้</h4>
+  <label class="field">คาบ
+    <select id="homePeriod" class="full" onchange="loadAdminHome()">
+      <option value="1">คาบ 1</option>
+      <option value="2">คาบ 2</option>
+      <option value="3">คาบ 3</option>
+      <option value="4">คาบ 4</option>
+      <option value="5">คาบ 5</option>
+      <option value="6">คาบ 6</option>
+      <option value="7">คาบ 7</option>
+      <option value="8">คาบ 8</option>
+    </select>
+  </label>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">นักเรียนทั้งหมด</div><div id="subj-total" class="kpi-value">-</div></div>
+    <div class="kpi"><div class="kpi-label">มาเรียน (มา+สาย)</div><div id="subj-attend" class="kpi-value">-</div></div>
+    <div class="kpi"><div class="kpi-label">สาย</div><div id="subj-late" class="kpi-value">-</div></div>
+    <div class="kpi"><div class="kpi-label">ขาด</div><div id="subj-absent" class="kpi-value">-</div></div>
+  </div>
+  <div class="chart-box"><canvas id="subjChart"></canvas></div>
+</section>
 
           <section class="page hidden" id="a-subject">
             <h3>ครู: เช็คชื่อวิชาสังคม วันที่ <span id="subjToday"></span></h3>
@@ -266,6 +285,7 @@
 
   <script src="app.js"></script>
   <script src="nav.js"></script>
+  <script src="home.js"></script>
 </body>
 
 </html>
