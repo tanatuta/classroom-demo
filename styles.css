@@ -546,3 +546,31 @@ pre {
     font-size: 14px;
   }
 }
+
+/* ===== การ์ด KPI และกราฟหน้าหลัก ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.kpi {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+
+.kpi-label { color: var(--muted); font-size: 14px; }
+.kpi-value { font-size: 20px; font-weight: 700; color: var(--text); margin-top: 4px; }
+
+.chart-box {
+  max-width: 280px;
+  margin: 8px auto 16px;
+}
+
+@media (max-width: 768px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
